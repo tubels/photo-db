@@ -1,0 +1,241 @@
+{% load static %}
+
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="{% static 'photos/styles/base.css' %}">
+    <script defer src="{% static 'photos/scripts/my-script.js' %}">
+    </script>
+    <title>Photos-DB</title>
+</head>
+<body>
+<form action="{% url 'options' %}" method="get" id="myForm">
+    <div class="sidenav">
+        <a href="{% url 'main'%}">Home</a>
+            <button type="button" class="dropdown-btn">
+                Sort by
+            </button>
+            <div class="dropdown-container">
+                {% for sort in sorts %}
+                    <div>
+                        {% with sort.0 as val %}
+                        <label class="container">{{ sort.1 }}
+                            <input onClick="submitForm('{{ sort.0 }}')" id="{{ sort.0 }}" name="{{ sort.0 }}" type="checkbox" value="enabled" {% if val in isChecked %} checked {% endif %}/>
+                            <span class="checkmark"></span>
+                        </label>
+                        {% endwith %}
+                    </div>
+                {% endfor %}
+            </div>
+
+
+            <button type="button" class="dropdown-btn">
+                Camera
+            </button>
+            <div class="dropdown-container">
+                {% for x in cameras %}
+                    <div>
+                        {% with x.id|stringformat:"i" as t %}
+                            {% with "camera_"|add:t as val %}
+                            <label class="container">{{x.model}}
+                                <input class="check" onClick="submitForm('camera_'+{{ x.id }})" id="camera_{{ x.id }}" name="camera_{{ x.id }}" type="checkbox" value="enabled" {% if val in isChecked %} checked {% endif %}/>
+                                <span class="checkmark"></span>
+                            </label>
+                            {% endwith %}
+                        {% endwith %}
+                    </div>
+                {% endfor %}
+            </div>
+
+
+            <button type="button" class="dropdown-btn">
+                Film
+            </button>
+            <div class="dropdown-container">
+                {% for x in film %}
+                    <div>
+                        {% with x.id|stringformat:"i" as t %}
+                            {% with "film_"|add:t as val %}
+                            <label class="container">{{x.name}}
+                                <input class="check" onClick="submitForm('film_'+{{ x.id }})" id="film_{{ x.id }}" name="film_{{ x.id }}" type="checkbox" value="enabled" {% if val in isChecked %} checked {% endif %}/>
+                                <span class="checkmark"></span>
+                            </label>
+                            {% endwith %}
+                        {% endwith %}
+                    </div>
+                {% endfor %}
+            </div>
+
+
+            <button type="button" class="dropdown-btn">
+                Event
+            </button>
+            <div class="dropdown-container">
+                {% for x in event %}
+                    <div>
+                        {% with x.id|stringformat:"i" as t %}
+                            {% with "event_"|add:t as val %}
+                            <label class="container">{{x.name}}
+                                <input class="check" onClick="submitForm('event_'+{{ x.id }})" id="event_{{ x.id }}" name="event_{{ x.id }}" type="checkbox" value="enabled" {% if val in isChecked %} checked {% endif %}/>
+                                <span class="checkmark"></span>
+                            </label>
+                            {% endwith %}
+                        {% endwith %}
+                    </div>
+                {% endfor %}
+            </div>
+
+        <a class="upload-btn" id="myBtn">Upload</a>
+    </div>
+
+    <div class="main">
+        {% for x in photos %}
+            <div class="responsive">
+                <button class="select-btn" id="photo_{{ x.id }}" name="photo_{{ x.id }}" type="submit" value="show">
+                <div class="gallery">
+                    <img src="{% static 'photos/pictures/' %}{{ x.timestamp }}/{{ x.fileName }}">
+                    <div class="desc">{{x.fileName}}</div>
+                </div>
+                </button>
+            </div>
+        {% endfor %}
+    </div>
+</form>
+
+<form method="post" id="modal-form" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close-upload">&times;</span>
+            <div class="modal-gallery" onclick="triggerFileInput()">
+                <label id="click">Click to add photo</label>
+                <input class="modal-img" type="file" id="img" name="img" accept="image/*" style="display: none;" onchange="displayImage(this)">
+                <img class="modal-img" id="uploadedImage" src="">
+            </div>
+            <table class="modal-info">
+                <tr>
+                    <th>Filename: </th>
+                    <td id="add-new-filename" contenteditable="true"></td>
+                    <input id="add-filename" name="filename" type="hidden"/>
+                </tr>
+                <tr>
+                    <th>Camera: </th>
+                    <td>
+                        <select class="modal-dropdown" name="camera">
+                            {% for x in cameras %}
+                            <option value="{{x.id}}">{{x.model}}</option>
+                            {% endfor %}
+                            <option value="none" selected>none</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Event: </th>
+                    <td>
+                        <select class="modal-dropdown" name="event">
+                            {% for x in event %}
+                            <option value="{{x.id}}">{{x.name}}</option>
+                            {% endfor %}
+                            <option value="none" selected>none</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Film: </th>
+                    <td>
+                        <select class="modal-dropdown" name="film">
+                            {% for x in film %}
+                            <option value="{{x.id}}">{{x.name}}</option>
+                            {% endfor %}
+                            <option value="none" selected>none</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Time Stamp: </th>
+                    <td>
+                        <input class="modal-dropdown" id="add-timestamp" name="timestamp" type="date" value="{{sPhoto.timestamp}}" />
+                    </td>
+                </tr>
+                <tr>
+                    <th>FilmEnd: </th>
+                    <td>
+                        <input class="modal-dropdown" id="add-filmEnd" name="filmEnd" type="date" value="{{sPhoto.filmEnd}}" />
+                    </td>
+                </tr>
+            </table>
+            <button class="modal-btn" id="add" name="add" onclick="submitModalForm('add')" type="submit" value="add">Add to database</button>
+        </div>
+    </div>
+
+    {% if sPhoto %}
+        <div id="imgModal" class="modal">
+            <div class="modal-content">
+                <span class="close-photo">&times;</span>
+                <div class="modal-gallery">
+                    <img class="modal-img" src="{% static 'photos/pictures/' %}{{ sPhoto.timestamp }}/{{ sPhoto.fileName }}">
+                </div>
+                <table class="modal-info">
+                    <tr>
+                        <th>Filename: </th>
+                        <td id="new-filename" contenteditable="true">{{sPhoto.fileName}}</td>
+                        <input id="filename" name="filename" type="hidden"/>
+                    </tr>
+                    <tr>
+                        <th>Camera: </th>
+                        <td>
+                            <select class="modal-dropdown" name="camera">
+                                {% for x in cameras %}
+                                <option value="{{x.id}}" {% if x.id == sPhoto.camera_id %} selected {% endif %}>{{x.model}}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Event: </th>
+                        <td>
+                            <select class="modal-dropdown" name="event">
+                                {% for x in event %}
+                                <option value="{{x.id}}" {% if x.id == sPhoto.event_id %} selected {% endif %}>{{x.name}}</option>
+                                {% endfor %}
+                                <option value="{{x.id}}" {% if not sPhoto.event_id %} selected {% endif %}>none</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Film: </th>
+                        <td>
+                            <select class="modal-dropdown" name="film">
+                                {% for x in film %}
+                                <option value="{{x.id}}" {% if x.id == sPhoto.film_id %} selected {% endif %}>{{x.name}}</option>
+                                {% endfor %}
+                                <option value="{{x.id}}" {% if not sPhoto.film_id %} selected {% endif %}>none</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Time Stamp: </th>
+                        <td>
+                            <input class="modal-dropdown" id="timestamp" name="timestamp" type="date" value="{{sPhoto.timestamp}}"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>FilmEnd: </th>
+                        <td>
+                            <input class="modal-dropdown" id="filmEnd" name="filmEnd" type="date" value="{{sPhoto.filmEnd}}"/>
+                        </td>
+                    </tr>
+                </table>
+                <button class="modal-btn" id="download" onclick="submitModalForm('download')" name="download" type="submit" value="{{sPhoto.fileName}}">Download</button>
+                <button class="modal-btn" id="save" onclick="submitModalForm('save')" name="save" type="submit" value="{{sPhoto.id}}">Save</button>
+                <button class="modal-btn" id="delete" onclick="submitModalForm('delete')" name="delete" type="submit" value="{{sPhoto.id}}">Delete</button>
+            </div>
+        </div>
+    {% endif %}
+</form>
+</body>
+</html>

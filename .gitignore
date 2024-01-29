@@ -1,2 +1,6 @@
 __pycache__
-/db.sqlite3
+.idea
+photos/static/photos/pictures
+sqlite3.exe
+db.sqlite3
+Paskaidrojums.docx
